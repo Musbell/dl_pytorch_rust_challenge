@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "and_perceptron", "not_perceptron",
+]
+
+
+[workspace.package]
+name = "dl_pytorch_rust_challenge"
+version = "0.1.0"
+edition = "2021"
+
+
+
+[workspace.dependencies]
+polars = { version = "0.39.2", features = ["lazy"] }
+
