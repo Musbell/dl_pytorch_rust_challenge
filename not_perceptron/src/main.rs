@@ -9,6 +9,7 @@ use polars::prelude::*;
 
 
 fn main() {
+    // TODO: Set weight1, weight2, and bias
     const WEIGHT_1: i32 = 0;
     const WEIGHT_2: i32 = -1;
     const BIAS: f64 =  0.5;
