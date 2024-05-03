@@ -2,14 +2,14 @@
 NOT Perceptron
 Unlike the other perceptrons we looked at, the NOT operation only cares about one input. The operation returns a 0 if the input is 1 and a 1 if it's a 0. The other inputs to the perceptron are ignored.
 
-In this quiz, you'll set the weights (weight1, weight2) and bias bias to the values that calculate the NOT operation on the second input and ignores the first input.
+In this quiz, you'll set the weights (WEIGHT_1, WEIGHT_2) and BIAS bias to the values that calculate the NOT operation on the second input and ignores the first input.
 **/
 
 use polars::prelude::*;
 
 
 fn main() {
-    // TODO: Set weight1, weight2, and bias
+    // TODO: Set WEIGHT_1, WEIGHT_2, and BIAS
     const WEIGHT_1: i32 = 0;
     const WEIGHT_2: i32 = -1;
     const BIAS: f64 =  0.5;
