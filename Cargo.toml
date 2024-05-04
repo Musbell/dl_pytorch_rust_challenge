@@ -2,7 +2,7 @@
 resolver = "2"
 
 members = [
-    "and_perceptron", "not_perceptron",
+    "and_perceptron", "not_perceptron", "perceptron",
 ]
 
 
