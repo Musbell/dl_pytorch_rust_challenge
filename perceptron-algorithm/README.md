@@ -55,5 +55,6 @@ let seed: u64 = 42;
 After training completes, you will get:
 - Terminal output summarizing epochs, final weights, and biases.
 - A visual plot (`perceptron_plot.png`) showing class separation and decision boundary progress.
+![perceptron_plot.png](../perceptron_plot.png)
 
 
