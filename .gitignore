@@ -1,0 +1,20 @@
+# Ignore target directory
+/target
+
+# IDE/project files
+.idea/
+/*.rs.bk
+**/*.swp
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Ignore local build artifacts and outputs
+**/*.out
+**/*.lock
+
+# Ignore virtualenv or other misc
+.env
+.vscode/

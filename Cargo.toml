@@ -1,0 +1,11 @@
+[workspace]
+resolver = "2"
+
+members = [
+    "perceptron-guesser",
+    "perceptron-algorithm"
+]
+
+[profile.release]
+panic = 'abort'
+strip = true
