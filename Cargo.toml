@@ -3,7 +3,8 @@ resolver = "2"
 
 members = [
     "perceptron-guesser",
-    "perceptron-algorithm"
+    "perceptron-algorithm", 
+    "softmax"
 ]
 
 [profile.release]
