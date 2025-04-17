@@ -36,7 +36,7 @@ Add `ndarray` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ndarray = "0.15" # Use the latest compatible version
+ndarray = "0.16.1" # Use the latest compatible version
 ```
 
 ### Function Signature
