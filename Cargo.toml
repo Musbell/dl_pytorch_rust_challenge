@@ -10,3 +10,12 @@ members = [
 [profile.release]
 panic = 'abort'
 strip = true
+
+
+[workspace.dependencies]
+# Other workspace dependencies...
+burn = { version = "^0.16.1", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics"] }
+plotters = "0.3.7"
+serde = { version = "1.0", features = ["derive"] } # Specify common features like 'derive' here
+csv = "1.1"
+anyhow = "1.0"
