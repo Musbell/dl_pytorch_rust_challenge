@@ -68,35 +68,6 @@ fn plot_points<DB: DrawingBackend>(
     Ok(())
 }
 
-/*
-// --- Boundary Line Drawing Function (REMOVED AS PER REQUEST) ---
-// This function is no longer needed if we don't draw the boundary line.
-
-/// Draws a line y = m*x + b across the specified x-range.
-fn draw_line<'a, DB: DrawingBackend>(
-    chart: &mut ChartContext<'a, DB, Cartesian2d<RangedCoordf64, RangedCoordf64>>,
-    x_range: std::ops::Range<f64>,
-    m: f64,
-    b: f64,
-    color: &'a RGBColor,
-    label: &'a str,
-) -> Result<(), DrawingAreaErrorKind<DB::ErrorType>> {
-    let x_min = x_range.start;
-    let x_max = x_range.end;
-
-    let line_series = LineSeries::new(
-        vec![(x_min, m * x_min + b), (x_max, m * x_max + b)],
-        color.stroke_width(2),
-    );
-
-    chart
-        .draw_series(line_series)?
-        .label(label)
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], color.stroke_width(2)));
-
-    Ok(())
-}
-*/
 
 // --- Main Function ---
 fn main() -> Result<()> {
@@ -175,10 +146,7 @@ fn main() -> Result<()> {
 
     // Plot the data points.
     plot_points(&mut chart, &admitted_points, &rejected_points)?;
-
-    // --- Boundary Line Drawing Removed ---
-    // The call to draw_line has been removed.
-    // draw_line(&mut chart, x_coord_range, 1.0, 0.0, &GREEN, "Boundary Guess (y=x)")?;
+    
 
     // Configure and draw legend.
     chart
