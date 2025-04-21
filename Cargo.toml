@@ -4,8 +4,8 @@ resolver = "2"
 members = [
     "perceptron-guesser",
     "perceptron-algorithm", 
-    "softmax", "cross-entropy"
-]
+    "softmax", "cross-entropy",
+    "my_burn_app", "gradient-descent"]
 
 [profile.release]
 panic = 'abort'

@@ -1,0 +1,12 @@
+[package]
+name = "gradient-descent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+plotters = "0.3.7"
+ndarray = { version = "0.16.1", default-features = false }
+csv = "1.3.1"
+polars = { version = "0.46.0", features = ["lazy"] }
+serde = { version = "1.0.219", features = ["derive"] }
+anyhow = "1.0.98"

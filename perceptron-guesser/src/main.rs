@@ -35,7 +35,7 @@ impl Perceptron {
     fn evaluate(&self, expected_outputs: &[bool]) -> Result<EvaluationResult, PolarsError> {
         if expected_outputs.len() != BOOLEAN_INPUTS.len() {
             return Err(PolarsError::ComputeError(format!(
-                "Mismatch between number of inputs ({}) and expected outputs ({})",
+                "Mismatch between the number of inputs ({}) and expected outputs ({})",
                 BOOLEAN_INPUTS.len(), expected_outputs.len()
             ).into()));
         }
@@ -96,9 +96,9 @@ fn prompt_and_read_f64(prompt: &str) -> Result<f64, io::Error> {
 // --- Function to Generate Target Pattern (Remains the same) ---
 fn generate_target_pattern() -> Vec<bool> {
     let mut rng = rand::rng();
-    let w1_secret = rng.random_range(WEIGHT_RANGE.clone());
-    let w2_secret = rng.random_range(WEIGHT_RANGE.clone());
-    let b_secret = rng.random_range(WEIGHT_RANGE.clone());
+    let w1_secret = rng.random_range(WEIGHT_RANGE);
+    let w2_secret = rng.random_range(WEIGHT_RANGE);
+    let b_secret = rng.random_range(WEIGHT_RANGE);
 
     let target_pattern: Vec<bool> = BOOLEAN_INPUTS
         .iter()
@@ -110,7 +110,7 @@ fn generate_target_pattern() -> Vec<bool> {
         })
         .collect();
 
-    // println!( // Optional Hint
+    // println!(// Optional Hint
     //     "Hint: Secret params used: w1={:.2}, w2={:.2}, b={:.2}",
     //     w1_secret, w2_secret, b_secret
     // );
