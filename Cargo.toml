@@ -5,7 +5,10 @@ members = [
     "perceptron-guesser",
     "perceptron-algorithm", 
     "softmax", "cross-entropy",
-    "my_burn_app", "gradient-descent"]
+    "my_burn_app",
+    "gradient-descent",
+    "deep-learning/src-tauri"
+]
 
 [profile.release]
 panic = 'abort'
