@@ -99,6 +99,21 @@ pub trait AdmissionsOneHotOps {
     fn scale_mut(&mut self);
     fn split_train_test(self, test: f64, rng: &mut ThreadRng)
                         -> (AdmissionsOneHot, AdmissionsOneHot);
+    
+    /// Splitting the data into features and targets (labels)
+    // Split the one‑hot data into
+    ///   * `x` – features  `[gre, gpa, r1, r2, r3, r4]`
+    ///   * `y` – target    `admit`
+    fn split_xy(&self) -> XY;
+}
+
+/// Convenience container returned by `split_xy`.
+pub struct XY {
+    /// Each inner `Vec<f64>` holds the 6 feature values for one row
+    /// (scaled gre, scaled gpa, r1 … r4).
+    pub x: Vec<Vec<f64>>,
+    /// Target labels (0 = rejected, 1 = admitted)
+    pub y: Vec<i32>,
 }
 
 impl AdmissionsOneHotOps for AdmissionsOneHot {
@@ -153,6 +168,20 @@ impl AdmissionsOneHotOps for AdmissionsOneHot {
         }
         (Self { rows: train }, Self { rows: test })
     }
+
+    /// Splitting the data into features and targets (labels)
+    fn split_xy(&self) -> XY {
+        let mut x = Vec::with_capacity(self.rows.len());
+        let mut y = Vec::with_capacity(self.rows.len());
+
+        for r in &self.rows {
+            // 6 features in the same order every time
+            x.push(vec![r.gre, r.gpa, r.r1 as f64, r.r2 as f64, r.r3 as f64, r.r4 as f64]);
+            y.push(r.admit);
+        }
+        XY { x, y }
+    }
+
 }
 
 /* -------------------------------------------------------------- pretty‑printer */

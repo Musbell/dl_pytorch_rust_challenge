@@ -1,5 +1,7 @@
 mod data;
 mod plot;
+mod train;
+mod model;
 
 use anyhow::{anyhow, Result};
 use rand::thread_rng;
@@ -13,6 +15,7 @@ use data::{
     AdmissionsOneHot, AdmissionsOneHotOps, AdmissionsOneHotPrint,
     RecordOH,
 };
+use crate::data::XY;
 
 /// Create the output directory if it doesn't exist
 async fn setup_output_directory(dir: &str) -> Result<()> {
@@ -75,6 +78,10 @@ async fn main() -> Result<()> {
     let mut rng = thread_rng();
     let (train_oh, test_oh) = admissions_oh.split_train_test(test, &mut rng);
 
+    let XY { x, y }   = train_oh.split_xy();
+    let XY { x: xt, y: yt } = test_oh.split_xy();
+
+
     // ------------------------------------------------------------- combine (for plotting only)
     let combined_oh: AdmissionsOneHot = train_oh
         .rows
@@ -85,6 +92,10 @@ async fn main() -> Result<()> {
     // ------------------------------------------------------------- plot per rank
     let grouped = group_by_rank(&combined_oh);
     plot_by_rank(grouped, out).await?;
+    
+  
+    println!("first 3 train rows ➜ {:?}", &x[..3]);
+    println!("first 3 train labels ➜ {:?}", &y[..3]);
 
     Ok(())
 }
