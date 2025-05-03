@@ -7,7 +7,7 @@ members = [
     "softmax", "cross-entropy",
     "my_burn_app",
     "gradient-descent",
-    "deep-learning/src-tauri"
+    "student-admissions",
 ]
 
 [profile.release]
@@ -17,8 +17,11 @@ strip = true
 
 [workspace.dependencies]
 # Other workspace dependencies...
-burn = { version = "^0.16.1", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics"] }
-plotters = "0.3.7"
+burn = { version = "0.17.0", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics"] }
+plotters = "0.3"        # or whatever the latest 0.3.x is
+plotters-backend = "0.3"
+anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] } # Specify common features like 'derive' here
 csv = "1.1"
-anyhow = "1.0"
+tokio = { version = "1", features = ["full"] }
+rand = "0.8.5"

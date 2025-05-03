@@ -1,13 +1,12 @@
 [package]
-name = "gradient-descent"
+name = "student-admissions"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-burn     = { workspace = true }
 plotters = { workspace = true }
 serde    = { workspace = true, features = ["derive"] }
 csv      = { workspace = true }
 anyhow   = { workspace = true }
-rand = { workspace = true }
-tokio = { workspace = true }
+tokio =  { workspace = true }
+rand = "0.9.1"
