@@ -99,7 +99,7 @@ pub trait AdmissionsOneHotOps {
     fn scale_mut(&mut self);
     fn split_train_test(self, test: f64, rng: &mut ThreadRng)
                         -> (AdmissionsOneHot, AdmissionsOneHot);
-    
+
     /// Splitting the data into features and targets (labels)
     // Split the one‑hot data into
     ///   * `x` – features  `[gre, gpa, r1, r2, r3, r4]`
@@ -118,25 +118,15 @@ pub struct XY {
 
 impl AdmissionsOneHotOps for AdmissionsOneHot {
     fn scale_mut(&mut self) {
-        if self.rows.is_empty() { return; }
-
-        let len     = self.rows.len() as f64;
-        let (sum_gre, sum_gpa) = self.rows.iter()
-            .fold((0.0, 0.0), |(sgre, sgpa), r| (sgre + r.gre, sgpa + r.gpa));
-        let mean_gre = sum_gre / len;
-        let mean_gpa = sum_gpa / len;
-
-        let (var_gre, var_gpa) = self.rows.iter()
-            .fold((0.0, 0.0), |(vg, vp), r| {
-                (vg + (r.gre - mean_gre).powi(2),
-                 vp + (r.gpa - mean_gpa).powi(2))
-            });
-        let sd_gre = (var_gre / len).sqrt().max(1.0);
-        let sd_gpa = (var_gpa / len).sqrt().max(1.0);
-
+        // Simple 0‑1 scaling:
+        //   • GRE  ∈ [200,800]  -> divide by 800  (≈ 0‑1)
+        //   • GPA  ∈ [1,4]      -> divide by 4    (≈ 0‑1)
+        //
+        // This matches many tutorials that normalise features to [0,1] for
+        // neural networks. :contentReference[oaicite:1]{index=1}
         for r in &mut self.rows {
-            r.gre = (r.gre - mean_gre) / sd_gre;
-            r.gpa = (r.gpa - mean_gpa) / sd_gpa;
+            r.gre /= 800.0;
+            r.gpa /= 4.0;
         }
     }
 
