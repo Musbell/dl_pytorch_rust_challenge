@@ -1,101 +1,114 @@
+// ─────────────────────────── main.rs ────────────────────────────────────────
 mod data;
 mod plot;
 mod train;
 mod model;
 
 use anyhow::{anyhow, Result};
-use rand::thread_rng;
 use std::collections::HashMap;
 use std::path::Path;
 use tokio;
+use rand::{SeedableRng, rngs::StdRng};
 
 use data::{
-    Admissions,
-    AdmissionsOps, CsvLoad,
-    AdmissionsOneHot, AdmissionsOneHotOps, AdmissionsOneHotPrint,
-    RecordOH,
+    Admissions, AdmissionsOps, CsvLoad,
+    AdmissionsOneHot, AdmissionsOneHotOps, RecordOH, XY,
 };
-use crate::data::XY;
-
-/// Create the output directory if it doesn't exist
+use model::{BCE, MSE}; // Swap BCE for MSE or vice‑versa in train_nn::<…>
+use train::train_nn;
+use crate::data::AdmissionsOneHotPrint;
+/* fs helper */
 async fn setup_output_directory(dir: &str) -> Result<()> {
     if !Path::new(dir).exists() {
         std::fs::create_dir_all(dir)
-            .map_err(|e| anyhow!("cannot create '{}': {e}", dir))?;
+            .map_err(|e| anyhow!("cannot create '{dir}': {e}"))?;
     }
     Ok(())
 }
 
-/// Group scaled one‑hot rows by their **original** rank (r1–r4 back‑mapping)
+/* back‑map r1..r4 → rank */
 fn group_by_rank(oh: &AdmissionsOneHot) -> HashMap<i32, Vec<RecordOH>> {
-    let mut map = HashMap::new();
+    let mut map: HashMap<i32, Vec<RecordOH>> = HashMap::new();
     for rec in &oh.rows {
-        let rank = if rec.r1 == 1 {
-            1
-        } else if rec.r2 == 1 {
-            2
-        } else if rec.r3 == 1 {
-            3
-        } else if rec.r4 == 1 {
-            4
-        } else {
-            0
+        let rank = match (rec.r1, rec.r2, rec.r3, rec.r4) {
+            (1, _, _, _) => 1,
+            (_, 1, _, _) => 2,
+            (_, _, 1, _) => 3,
+            (_, _, _, 1) => 4,
+            _            => 0,
         };
-        map.entry(rank).or_insert_with(Vec::new).push(rec.clone());
+        map.entry(rank).or_default().push(rec.clone());
     }
     map
 }
 
-/// Iterate over grouped data and call the new `plot_admissions_oh`
-async fn plot_by_rank(grouped: HashMap<i32, Vec<RecordOH>>, out_dir: &str) -> Result<()> {
+/* plotting helper */
+async fn plot_by_rank(grouped: HashMap<i32, Vec<RecordOH>>, out: &str) -> Result<()> {
     for (rank, rows) in grouped {
-        if rows.is_empty() {
-            continue;
-        }
-        let png   = format!("{out_dir}/admissions_rank{rank}.png");
-        let title = format!("Admissions – GRE vs GPA (Scaled) • Rank {rank}");
+        if rows.is_empty() { continue; }
+        let png   = format!("{out}/admissions_rank{rank}.png");
+        let title = format!("Admissions • GRE vs GPA (scaled) • Rank {rank}");
         plot::plot_admissions_oh(&rows, &png, &title)?;
-        println!("wrote {png}");
     }
     Ok(())
 }
 
+/* tiny sigmoid */
+#[inline]
+fn sigmoid(v: f64) -> f64 { 1.0 / (1.0 + (-v).exp()) }
+
+/* main */
 #[tokio::main]
 async fn main() -> Result<()> {
-    // ------------------------------------------------------------------ paths
-    let csv  = "student-admissions/student_data.csv";
-    let out  = "student-admissions/plots";
-    let test = 0.10; // 10 %
+    /* config */
+    let csv    = "student-admissions/student_data.csv";
+    let out    = "student-admissions/plots";
+    let test   = 0.25;
+    let epochs = 10_000;
+    let lr     = 5e-4;
 
     setup_output_directory(out).await?;
 
-    // ------------------------------------------------------------- load → one‑hot
-    let admissions        = Admissions::from_csv(csv)?;
+    /* load CSV */
+    let admissions = Admissions::from_csv(csv)?;
+
+    /* preview raw CSV */
+    println!("\n=== RAW (first 5 rows) ===");
+    admissions.head(5);
+
+    /* one‑hot → scale */
     let mut admissions_oh = admissions.one_hot_rank();
     admissions_oh.scale_mut();
 
-    // ------------------------------------------------------------- split
-    let mut rng = thread_rng();
+    /* preview processed data */
+    println!("\n=== ONE‑HOT + SCALED (first 5 rows) ===");
+    admissions_oh.head_oh(5);
+
+    /* split train / test */
+    let mut rng = StdRng::seed_from_u64(42);
     let (train_oh, test_oh) = admissions_oh.split_train_test(test, &mut rng);
 
-    let XY { x, y }   = train_oh.split_xy();
-    let XY { x: xt, y: yt } = test_oh.split_xy();
+    let XY { x: x_train, y: y_train } = train_oh.split_xy();
+    let XY { x: x_test,  y: y_test  } = test_oh .split_xy();
 
+    /* train */
+    let weights = train_nn::<BCE>(&XY { x: x_train, y: y_train }, epochs, lr)?;
 
-    // ------------------------------------------------------------- combine (for plotting only)
+    /* evaluate */
+    let mut correct = 0usize;
+    for (x, &y) in x_test.iter().zip(&y_test) {
+        let z   = x.iter().zip(&weights).map(|(xi, wi)| xi * wi).sum::<f64>();
+        if (sigmoid(z) > 0.5) == (y == 1) { correct += 1; }
+    }
+    println!("prediction accuracy: {:.3}",
+             correct as f64 / y_test.len() as f64);
+
+    /* plots */
     let combined_oh: AdmissionsOneHot = train_oh
-        .rows
-        .into_iter()
+        .rows.into_iter()
         .chain(test_oh.rows.into_iter())
         .collect();
 
-    // ------------------------------------------------------------- plot per rank
-    let grouped = group_by_rank(&combined_oh);
-    plot_by_rank(grouped, out).await?;
-    
-  
-    println!("first 3 train rows ➜ {:?}", &x[..3]);
-    println!("first 3 train labels ➜ {:?}", &y[..3]);
-
+    plot_by_rank(group_by_rank(&combined_oh), out).await?;
     Ok(())
 }

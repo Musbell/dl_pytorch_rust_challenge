@@ -1,13 +1,12 @@
 use anyhow::Result;
 use csv::ReaderBuilder;
-use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
+use rand::RngCore;                     // generic RNG trait
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-/* ---------------------------------------------------------------- CSV record */
-
+/* ────────────────────────────── CSV record ─────────────────────────────── */
 #[derive(Debug, Deserialize, Clone)]
 pub struct Record {
     pub admit: i32,
@@ -27,14 +26,15 @@ pub trait CsvLoad {
 
 impl CsvLoad for Admissions {
     fn from_csv(path: &str) -> Result<Admissions> {
-        let mut rdr = ReaderBuilder::new().has_headers(true).from_path(path)?;
-        let rows    = rdr.deserialize::<Record>().collect::<Result<_, _>>()?;
+        let mut rdr = ReaderBuilder::new()
+            .has_headers(true)
+            .from_path(path)?;
+        let rows = rdr.deserialize::<Record>().collect::<Result<_, _>>()?;
         Ok(Admissions { rows })
     }
 }
 
-/* --------------------------------------------------------- one‑hot structures */
-
+/* ────────────────────────── one‑hot structures ─────────────────────────── */
 #[derive(Debug, Clone)]
 pub struct RecordOH {
     pub admit: i32,
@@ -51,15 +51,14 @@ pub struct AdmissionsOneHot {
     pub rows: Vec<RecordOH>,
 }
 
-/* 🔑 allow `collect::<AdmissionsOneHot>()` */
+/* allow `collect::<AdmissionsOneHot>()` */
 impl FromIterator<RecordOH> for AdmissionsOneHot {
     fn from_iter<I: IntoIterator<Item = RecordOH>>(iter: I) -> Self {
         Self { rows: iter.into_iter().collect() }
     }
 }
 
-/* -------------------------------------------------------------- AdmissionsOps */
-
+/* ───────────────────── AdmissionsOps for raw CSV ───────────────────────── */
 pub trait AdmissionsOps {
     fn one_hot_rank(self) -> AdmissionsOneHot;
     fn head(&self, n: usize);
@@ -75,12 +74,7 @@ impl AdmissionsOps for Admissions {
                 4 => (0, 0, 0, 1),
                 _ => (0, 0, 0, 0),
             };
-            RecordOH {
-                admit: r.admit,
-                gre:   r.gre as f64,
-                gpa:   r.gpa,
-                r1, r2, r3, r4,
-            }
+            RecordOH { admit: r.admit, gre: r.gre as f64, gpa: r.gpa, r1, r2, r3, r4 }
         }).collect();
         AdmissionsOneHot { rows }
     }
@@ -93,58 +87,56 @@ impl AdmissionsOps for Admissions {
     }
 }
 
-/* -------------------------------------------------------- AdmissionsOneHotOps */
-
+/* ───────────── AdmissionsOneHotOps (generic RNG) ───────────────────────── */
 pub trait AdmissionsOneHotOps {
     fn scale_mut(&mut self);
-    fn split_train_test(self, test: f64, rng: &mut ThreadRng)
-                        -> (AdmissionsOneHot, AdmissionsOneHot);
 
-    /// Splitting the data into features and targets (labels)
-    // Split the one‑hot data into
-    ///   * `x` – features  `[gre, gpa, r1, r2, r3, r4]`
-    ///   * `y` – target    `admit`
+    fn split_train_test<R>(self, test: f64, rng: &mut R)
+                           -> (AdmissionsOneHot, AdmissionsOneHot)
+    where
+        R: RngCore + ?Sized;
+
     fn split_xy(&self) -> XY;
 }
 
-/// Convenience container returned by `split_xy`.
+/// Return type of `split_xy`
 pub struct XY {
-    /// Each inner `Vec<f64>` holds the 6 feature values for one row
-    /// (scaled gre, scaled gpa, r1 … r4).
-    pub x: Vec<Vec<f64>>,
-    /// Target labels (0 = rejected, 1 = admitted)
-    pub y: Vec<i32>,
+    pub x: Vec<Vec<f64>>,   // 6 features per row
+    pub y: Vec<i32>,        // admit labels
 }
 
 impl AdmissionsOneHotOps for AdmissionsOneHot {
+    /* ---------- scaling ---------- */
     fn scale_mut(&mut self) {
-        // Simple 0‑1 scaling:
-        //   • GRE  ∈ [200,800]  -> divide by 800  (≈ 0‑1)
-        //   • GPA  ∈ [1,4]      -> divide by 4    (≈ 0‑1)
-        //
-        // This matches many tutorials that normalise features to [0,1] for
-        // neural networks. :contentReference[oaicite:1]{index=1}
         for r in &mut self.rows {
-            r.gre /= 800.0;
-            r.gpa /= 4.0;
+            r.gre /= 800.0;  // GRE range 200‑800 → 0‑1
+            r.gpa /= 4.0;    // GPA range   1‑4  → 0‑1
         }
     }
 
-    fn split_train_test(
+    /* ---------- train/test split (generic RNG) ---------- */
+    fn split_train_test<R>(
         self,
         test: f64,
-        rng: &mut ThreadRng,
-    ) -> (AdmissionsOneHot, AdmissionsOneHot) {
+        rng: &mut R,
+    ) -> (AdmissionsOneHot, AdmissionsOneHot)
+    where
+        R: RngCore + ?Sized,
+    {
         let total = self.rows.len();
         if total == 0 {
             return (Self { rows: vec![] }, Self { rows: vec![] });
         }
+
+        /* shuffle indices with the provided RNG */
         let mut idx: Vec<usize> = (0..total).collect();
         idx.shuffle(rng);
 
-        let test_cnt = ((total as f64 * test).round() as usize).max(1).min(total);
-        let (test_idx, train_idx) = idx.split_at(test_cnt);
-        let test_set: HashSet<_>   = test_idx.iter().copied().collect();
+        let test_cnt = ((total as f64 * test).round() as usize)
+            .max(1)
+            .min(total);
+        let (test_idx, _) = idx.split_at(test_cnt);
+        let test_set: HashSet<_> = test_idx.iter().copied().collect();
 
         let mut train = Vec::with_capacity(total - test_cnt);
         let mut test  = Vec::with_capacity(test_cnt);
@@ -159,38 +151,38 @@ impl AdmissionsOneHotOps for AdmissionsOneHot {
         (Self { rows: train }, Self { rows: test })
     }
 
-    /// Splitting the data into features and targets (labels)
+    /* ---------- split into X / y ---------- */
     fn split_xy(&self) -> XY {
         let mut x = Vec::with_capacity(self.rows.len());
         let mut y = Vec::with_capacity(self.rows.len());
 
         for r in &self.rows {
-            // 6 features in the same order every time
-            x.push(vec![r.gre, r.gpa, r.r1 as f64, r.r2 as f64, r.r3 as f64, r.r4 as f64]);
+            x.push(vec![
+                r.gre,
+                r.gpa,
+                r.r1 as f64,
+                r.r2 as f64,
+                r.r3 as f64,
+                r.r4 as f64,
+            ]);
             y.push(r.admit);
         }
         XY { x, y }
     }
-
 }
 
-/* -------------------------------------------------------------- pretty‑printer */
-
+/* ─────────────────────── pretty‑printer for debug ──────────────────────── */
 pub trait AdmissionsOneHotPrint {
     fn head_oh(&self, n: usize);
 }
 
 impl AdmissionsOneHotPrint for AdmissionsOneHot {
     fn head_oh(&self, n: usize) {
-        println!(
-            "{:>5} {:>8} {:>8} {:>3} {:>3} {:>3} {:>3}",
-            "admit", "gre", "gpa", "r1", "r2", "r3", "r4"
-        );
+        println!("{:>5} {:>8} {:>8} {:>3} {:>3} {:>3} {:>3}",
+                 "admit", "gre", "gpa", "r1", "r2", "r3", "r4");
         for r in self.rows.iter().take(n) {
-            println!(
-                "{:>5} {:>8.4} {:>8.4} {:>3} {:>3} {:>3} {:>3}",
-                r.admit, r.gre, r.gpa, r.r1, r.r2, r.r3, r.r4
-            );
+            println!("{:>5} {:>8.4} {:>8.4} {:>3} {:>3} {:>3} {:>3}",
+                     r.admit, r.gre, r.gpa, r.r1, r.r2, r.r3, r.r4);
         }
     }
 }

@@ -9,4 +9,5 @@ serde    = { workspace = true, features = ["derive"] }
 csv      = { workspace = true }
 anyhow   = { workspace = true }
 tokio =  { workspace = true }
-rand = "0.9.1"
+rand = { workspace = true }
+rand_distr = { workspace = true }

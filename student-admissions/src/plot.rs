@@ -1,6 +1,5 @@
 use anyhow::Result;          // ? sugar + Send/Sync ready
 use plotters::prelude::*;
-use std::error::Error;
 
 use crate::data::RecordOH;
 
@@ -9,7 +8,7 @@ pub fn plot_admissions_oh(
     records: &[RecordOH],
     png: &str,
     title: &str,
-) -> Result<()> {             // <── now anyhow::Result<()> (Send + Sync)
+) -> Result<()> {           
     /* 1 ── drawing area */
     let root = BitMapBackend::new(png, (640, 480)).into_drawing_area();
     root.fill(&WHITE)?;
