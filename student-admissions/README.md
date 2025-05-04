@@ -60,7 +60,7 @@ Four PNG scatter‑plots (`admissions_rank*.png`), visualizing the scaled data c
 
 The data processing and training pipeline follows these steps:
 
-```mermaid
+```
 flowchart LR
     A[CSV\n(student_data.csv)]
     B[one_hot_rank()]
