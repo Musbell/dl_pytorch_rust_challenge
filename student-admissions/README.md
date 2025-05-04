@@ -49,6 +49,11 @@ prediction accuracy: 0.740
 
 Four PNG scatter‑plots (`admissions_rank*.png`), visualizing the scaled data colored by admission status for each rank, will be generated under the `student-admissions/plots/` directory.
 
+![admissions_rank1.png](plots/admissions_rank1.png)
+![admissions_rank2.png](plots/admissions_rank2.png)
+![admissions_rank3.png](plots/admissions_rank3.png)
+![admissions_rank4.png](plots/admissions_rank4.png)
+
 ---
 
 ## 2  Data pipeline
