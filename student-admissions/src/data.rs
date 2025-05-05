@@ -101,7 +101,7 @@ pub trait AdmissionsOneHotOps {
 
 /// Return type of `split_xy`
 pub struct XY {
-    pub x: Vec<Vec<f64>>,   // 6 features per row
+    pub x: Vec<Vec<f64>>,   // Features per row (6 original + 1 bias = 7)
     pub y: Vec<i32>,        // admit labels
 }
 
@@ -157,14 +157,17 @@ impl AdmissionsOneHotOps for AdmissionsOneHot {
         let mut y = Vec::with_capacity(self.rows.len());
 
         for r in &self.rows {
-            x.push(vec![
+            let mut features = vec![
                 r.gre,
                 r.gpa,
                 r.r1 as f64,
                 r.r2 as f64,
                 r.r3 as f64,
                 r.r4 as f64,
-            ]);
+            ];
+            // Add the bias feature (constant value 1.0)
+            features.push(1.0);
+            x.push(features);
             y.push(r.admit);
         }
         XY { x, y }
@@ -178,8 +181,8 @@ pub trait AdmissionsOneHotPrint {
 
 impl AdmissionsOneHotPrint for AdmissionsOneHot {
     fn head_oh(&self, n: usize) {
-        println!("{:>5} {:>8} {:>8} {:>3} {:>3} {:>3} {:>3}",
-                 "admit", "gre", "gpa", "r1", "r2", "r3", "r4");
+        println!("{:>5} {:>8} {:>8} {:>3} {:>3} {:>3} {:>3} {:>6}",
+                 "admit", "gre", "gpa", "r1", "r2", "r3", "r4", "bias");
         for r in self.rows.iter().take(n) {
             println!("{:>5} {:>8.4} {:>8.4} {:>3} {:>3} {:>3} {:>3}",
                      r.admit, r.gre, r.gpa, r.r1, r.r2, r.r3, r.r4);
