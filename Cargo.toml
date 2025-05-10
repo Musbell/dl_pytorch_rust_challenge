@@ -7,7 +7,7 @@ members = [
     "softmax", "cross-entropy",
     "my_burn_app",
     "gradient-descent",
-    "student-admissions", "single-layer-nn",
+    "student-admissions", "single-layer-nn", "matrix-multiplication",
 ]
 
 [profile.release]
