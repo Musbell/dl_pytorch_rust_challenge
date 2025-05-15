@@ -12,7 +12,7 @@ use plotters::prelude::*;
 use plotters::backend::BitMapBackend;
 use std::error::Error;
 use std::io;
-use burn::tensor::Distribution;
+use burn::tensor::{Distribution, activation::{sigmoid, softmax}};
 
 
 #[derive(Clone, Debug, Default)]
@@ -139,12 +139,14 @@ fn build_multi_layer_network (inputs: Tensor<NdArray, 2>) -> Tensor<NdArray, 2> 
     let b2 = Tensor::random([1, 10], Distribution::Default, &device);
 
     // Create an instance of the Sigmoid module
-    let sigmoid = Sigmoid::new();
     let linear_h = inputs.matmul(w1) + b1;
-    let h_activated = sigmoid.forward(linear_h);
+    let h_activated = sigmoid(linear_h);
     let output = h_activated.matmul(w2) + b2;
+    println!("Output shape: {:?}", output.dims());
+    let probabilities = softmax(output, 1);
     
-    output
+    probabilities
+    
 
 }
 
@@ -156,8 +158,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Number of test batches: {}", dataloader_test.iter().count());
     let inputs = inspect_and_plot_first_batch(&dataloader_train)?;
     println!("Flattened first batch inputs shape: {:?}", inputs.dims());
-    let output = build_multi_layer_network(inputs);
-    println!("Output shape: {:?}", output.dims());
+    let probabilities = build_multi_layer_network(inputs);
+
+    println!("Probabilities shape: {:?}", probabilities.shape());
+    
+    // Does it sum to 1?
+    let sum = probabilities.sum_dim(1);
+    println!("Sum: {:?}", sum);
 
     Ok(())
 }
