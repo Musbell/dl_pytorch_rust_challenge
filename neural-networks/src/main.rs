@@ -1,5 +1,6 @@
 use burn::{
     data::{dataloader::batcher::Batcher, dataset::vision::MnistItem},
+    nn::Sigmoid,
     prelude::*,
 };
 use burn::data::dataloader::DataLoaderBuilder;
@@ -11,6 +12,8 @@ use plotters::prelude::*;
 use plotters::backend::BitMapBackend;
 use std::error::Error;
 use std::io;
+use burn::tensor::Distribution;
+
 
 #[derive(Clone, Debug, Default)]
 struct MnistBatcher {}
@@ -103,25 +106,46 @@ fn plot_f32_image(img: &[f32], width: usize, height: usize, path: &str) -> Resul
     Ok(())
 }
 
-fn inspect_and_plot_first_batch(loader: &NdDataLoader) -> Result<(), Box<dyn Error>> {
-    if let Some(MnistBatch { images: raw_images, targets: labels }) = loader.iter().next() {
-        // Print shapes
-        let dims = raw_images.dims(); // [batch, height, width]
-        println!("Image shape: {:?}", dims);
-        println!("Labels shape: {:?}", labels.to_data().shape);
+fn inspect_and_plot_first_batch(loader: &NdDataLoader) -> Result<Tensor<NdArray, 2>, Box<dyn Error>> {
+    // Get first batch or error if none
+    let MnistBatch { images: raw_images, targets: labels } = loader.iter()
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No batch to inspect"))?;
+    // Print shapes
+    let dims = raw_images.dims(); // [batch, height, width]
+    println!("Image shape: {:?}", dims);
+    println!("Labels shape: {:?}", labels.to_data().shape);
+    // Flatten inputs
+    let num_features = dims[1] * dims[2];
+    let inputs = raw_images.clone().reshape([dims[0], num_features]);
+    println!("Flattened inputs shape: {:?}", inputs.dims());
+    // Plot first image
+    let data = raw_images.to_data();
+    let flat: Vec<f32> = data.into_vec()
+        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("DataError: {:?}", e)))?;
+    plot_f32_image(&flat[..num_features], dims[2], dims[1], "mnist.png")?;
+    println!("Saved first image to mnist.png");
+    Ok(inputs)
+}
 
-        // Flatten inputs
-        let num_features = dims[1] * dims[2];
-        let inputs = raw_images.clone().reshape([dims[0], num_features]);
-        println!("Flattened inputs shape: {:?}", inputs.dims());
+fn build_multi_layer_network (inputs: Tensor<NdArray, 2>) -> Tensor<NdArray, 2> {
+    let device = Default::default();
 
-        // Plot first image
-        let data = raw_images.to_data();
-        let flat: Vec<f32> = data.into_vec().map_err(|e| io::Error::new(io::ErrorKind::Other, format!("DataError: {:?}", e)))?;
-        plot_f32_image(&flat[..num_features], dims[2], dims[1], "mnist.png")?;
-        println!("Saved first image to mnist.png");
-    }
-    Ok(())
+    // Create parameters
+    let w1 = Tensor::random([inputs.dims()[1], 256], Distribution::Default, &device);
+    let b1 = Tensor::random([1, 256], Distribution::Default, &device);
+    
+    let w2 = Tensor::random([256, 10], Distribution::Default, &device);
+    let b2 = Tensor::random([1, 10], Distribution::Default, &device);
+
+    // Create an instance of the Sigmoid module
+    let sigmoid = Sigmoid::new();
+    let linear_h = inputs.matmul(w1) + b1;
+    let h_activated = sigmoid.forward(linear_h);
+    let output = h_activated.matmul(w2) + b2;
+    
+    output
+
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -130,6 +154,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (dataloader_train, dataloader_test) = build_dataloaders(&config);
     println!("Number of train batches: {}", dataloader_train.iter().count());
     println!("Number of test batches: {}", dataloader_test.iter().count());
-    inspect_and_plot_first_batch(&dataloader_train)?;
+    let inputs = inspect_and_plot_first_batch(&dataloader_train)?;
+    println!("Flattened first batch inputs shape: {:?}", inputs.dims());
+    let output = build_multi_layer_network(inputs);
+    println!("Output shape: {:?}", output.dims());
+
     Ok(())
 }
