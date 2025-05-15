@@ -7,7 +7,7 @@ members = [
     "softmax", "cross-entropy",
     "my_burn_app",
     "gradient-descent",
-    "student-admissions", "single-layer-nn", "matrix-multiplication",
+    "student-admissions", "single-layer-nn", "matrix-multiplication", "neural-networks",
 ]
 
 [profile.release]
@@ -17,7 +17,7 @@ strip = true
 
 [workspace.dependencies]
 # Other workspace dependencies...
-burn = { version = "0.17.0", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics", "webgpu"] }
+burn = { version = "0.17.0", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics", "webgpu", "vision"] }
 plotters = "0.3"        # or whatever the latest 0.3.x is
 plotters-backend = "0.3"
 anyhow = "1.0"
@@ -26,3 +26,8 @@ csv = "1.1"
 tokio = { version = "1", features = ["full"] }
 rand = "0.8.5"
 rand_distr  = "0.4"
+# Explicitly add the backend crate for direct use of NdArrayBackend type
+burn-ndarray = "0.17.0"
+
+# Required for #[derive(Config)] and #[derive(Module)] when default-features = false
+burn-import = "0.17.0"

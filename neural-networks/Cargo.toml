@@ -1,0 +1,11 @@
+[package]
+name = "neural-networks"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+burn = { workspace = true }
+tokio = {workspace = true }
+burn-ndarray = { workspace = true }
+plotters = { workspace = true }
+plotters-backend = { workspace = true }
