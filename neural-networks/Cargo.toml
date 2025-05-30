@@ -7,5 +7,3 @@ edition = "2024"
 burn = { workspace = true }
 tokio = {workspace = true }
 burn-ndarray = { workspace = true }
-plotters = { workspace = true }
-plotters-backend = { workspace = true }

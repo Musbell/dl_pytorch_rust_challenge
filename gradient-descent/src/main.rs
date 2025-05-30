@@ -1,17 +1,17 @@
 mod data;
-mod plot;
 mod model;
-mod train;
+mod plot;
 mod synthetic_data_generator;
+mod train;
 
-use burn::prelude::Backend;
-use anyhow::Result;
-use burn::backend::{Autodiff, NdArray};
-use plotters::prelude::*;
-use std::path::PathBuf;
-use burn::backend;
 use crate::data::read_data;
 use crate::synthetic_data_generator::generate_synthetic_csv;
+use anyhow::Result;
+use burn::backend;
+use burn::backend::{Autodiff, NdArray};
+use burn::prelude::Backend;
+use plotters::prelude::*;
+use std::path::PathBuf;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -29,9 +29,8 @@ async fn main() -> Result<()> {
     println!("Wrote {} samples to {}", NUM_SAMPLES, DATA_PATH);
 
     // --- Load data ---
-    let (admitted, rejected, feats, targs) = read_data(DATA_PATH)
-        .await
-        .expect("Failed to read data");
+    let (admitted, rejected, feats, targs) =
+        read_data(DATA_PATH).await.expect("Failed to read data");
     println!("Loaded {} samples", feats.len());
     println!("Admitted: {} samples", admitted.len());
     println!("Rejected: {} samples", rejected.len());
@@ -49,10 +48,15 @@ async fn main() -> Result<()> {
 
     let all_pts = admitted.iter().chain(&rejected);
     let (min_x, max_x, min_y, max_y) = all_pts.clone().fold(
-        (f64::INFINITY, f64::NEG_INFINITY, f64::INFINITY, f64::NEG_INFINITY),
+        (
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+        ),
         |(min_x, max_x, min_y, max_y), &(x, y)| {
             (min_x.min(x), max_x.max(x), min_y.min(y), max_y.max(y))
-        }
+        },
     );
     let pad_x = (max_x - min_x).max(0.1) * 0.1;
     let pad_y = (max_y - min_y).max(0.1) * 0.1;
@@ -66,7 +70,8 @@ async fn main() -> Result<()> {
         .y_label_area_size(40)
         .build_cartesian_2d(x_range.clone(), y_range.clone())?;
 
-    chart.configure_mesh()
+    chart
+        .configure_mesh()
         .x_desc("Feature 1")
         .y_desc("Feature 2")
         .draw()?;
@@ -88,7 +93,8 @@ async fn main() -> Result<()> {
     )?;
 
     // --- Draw legend and save the plot ---
-    chart.configure_series_labels()
+    chart
+        .configure_series_labels()
         .background_style(WHITE.mix(0.8))
         .border_style(BLACK)
         .position(SeriesLabelPosition::UpperRight)
