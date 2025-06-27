@@ -318,7 +318,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     create_artifact_dir("/tmp/burn-example-mnist-wgpu");
 
     // Training parameters
-    let epochs = 10;
+    let epochs = 15;
     let learning_rate = 0.003;
 
     // Use WGPU backend for training

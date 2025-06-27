@@ -61,11 +61,31 @@ impl Dataset<MnistItem> for FashionMNISTDataset {
 impl FashionMNISTDataset {
     /// Creates a new train dataset.
     pub fn train() -> Self {
+        // Try different paths to find the data directory
+        let paths = vec!["./data", "../fashion-mnist/data", "./fashion-mnist/data"];
+
+        for path in paths {
+            if Path::new(path).exists() {
+                return Self::train_with_root(path);
+            }
+        }
+
+        // If none of the paths exist, use the first one and let the error handling show a clear message
         Self::train_with_root("./data")
     }
 
     /// Creates a new test dataset.
     pub fn test() -> Self {
+        // Try different paths to find the data directory
+        let paths = vec!["./data", "../fashion-mnist/data", "./fashion-mnist/data"];
+
+        for path in paths {
+            if Path::new(path).exists() {
+                return Self::test_with_root(path);
+            }
+        }
+
+        // If none of the paths exist, use the first one and let the error handling show a clear message
         Self::test_with_root("./data")
     }
 
@@ -109,19 +129,32 @@ impl FashionMNISTDataset {
         } else {
             TEST_IMAGES
         };
-        let file_name = root.as_ref().join(file_name);
+        let file_path = root.as_ref().join(file_name);
+
         // Read number of images from 16-byte header metadata
-        let mut f = File::open(file_name).unwrap();
+        let mut f = match File::open(&file_path) {
+            Ok(file) => file,
+            Err(e) => panic!("Failed to open image file at {:?}: {}", file_path, e),
+        };
+
         let mut buf = [0u8; 4];
-        let _ = f.seek(SeekFrom::Start(4)).unwrap();
+        match f.seek(SeekFrom::Start(4)) {
+            Ok(_) => {},
+            Err(e) => panic!("Failed to seek in image file: {}", e),
+        }
+
         f.read_exact(&mut buf)
             .expect("Should be able to read image file header");
         let size = u32::from_be_bytes(buf);
 
         let mut buf_images: Vec<u8> = vec![0u8; WIDTH * HEIGHT * (size as usize)];
-        let _ = f.seek(SeekFrom::Start(16)).unwrap();
+        match f.seek(SeekFrom::Start(16)) {
+            Ok(_) => {},
+            Err(e) => panic!("Failed to seek in image file: {}", e),
+        }
+
         f.read_exact(&mut buf_images)
-            .expect("Should be able to read image file header");
+            .expect("Should be able to read image file content");
 
         buf_images
             .chunks(WIDTH * HEIGHT)
@@ -136,18 +169,30 @@ impl FashionMNISTDataset {
         } else {
             TEST_LABELS
         };
-        let file_name = root.as_ref().join(file_name);
+        let file_path = root.as_ref().join(file_name);
 
         // Read number of labels from 8-byte header metadata
-        let mut f = File::open(file_name).unwrap();
+        let mut f = match File::open(&file_path) {
+            Ok(file) => file,
+            Err(e) => panic!("Failed to open label file at {:?}: {}", file_path, e),
+        };
+
         let mut buf = [0u8; 4];
-        let _ = f.seek(SeekFrom::Start(4)).unwrap();
+        match f.seek(SeekFrom::Start(4)) {
+            Ok(_) => {},
+            Err(e) => panic!("Failed to seek in label file: {}", e),
+        }
+
         f.read_exact(&mut buf)
             .expect("Should be able to read label file header");
         let size = u32::from_be_bytes(buf);
 
         let mut buf_labels: Vec<u8> = vec![0u8; size as usize];
-        let _ = f.seek(SeekFrom::Start(8)).unwrap();
+        match f.seek(SeekFrom::Start(8)) {
+            Ok(_) => {},
+            Err(e) => panic!("Failed to seek in label file: {}", e),
+        }
+
         f.read_exact(&mut buf_labels)
             .expect("Should be able to read labels from file");
 
