@@ -7,7 +7,11 @@ members = [
     "softmax", "cross-entropy",
     "my_burn_app",
     "gradient-descent",
-    "student-admissions", "single-layer-nn", "matrix-multiplication", "neural-networks",
+    "student-admissions",
+    "single-layer-nn",
+    "matrix-multiplication",
+    "neural-networks",
+    "fashion-mnist",
 ]
 
 [profile.release]
@@ -17,7 +21,7 @@ strip = true
 
 [workspace.dependencies]
 # Other workspace dependencies...
-burn = { version = "0.17.0", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics", "webgpu", "vision"] }
+burn = { version = "0.17.0", default-features = false, features = ["std", "ndarray", "autodiff", "train", "metrics", "webgpu", "vision", "accelerate", "metal"] }
 plotters = "0.3"        # or whatever the latest 0.3.x is
 plotters-backend = "0.3"
 anyhow = "1.0"
